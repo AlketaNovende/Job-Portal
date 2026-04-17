@@ -1,0 +1,7 @@
+for testing
+
+python -m unittest discover -s tests -v
+
+for running 
+
+python app.py

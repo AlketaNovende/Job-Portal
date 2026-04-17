@@ -1,23 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Responses</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="container mt-5">
-    <h3>Responses to the vacancy: {{ job.title }}</h3>
+{% extends "base.html" %}
+{% block title %}CareerFlow | Applications{% endblock %}
+{% block content %}
+<section class="stack">
+    <article class="panel">
+        <span class="eyebrow">Applications</span>
+        <h1 class="panel-title">{{ job.title }}</h1>
+        <p class="panel-copy">Review candidate responses submitted for this vacancy.</p>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </article>
     {% if applications %}
-    <ul class="list-group">
+    <div class="job-list">
         {% for app in applications %}
-        <li class="list-group-item">
-            Worker ID: {{ app.worker_id }}
-        </li>
+        <article class="job-card">
+            <div class="job-header">
+                <div>
+                    <span class="badge">Application #{{ app.id }}</span>
+                    <h3 class="job-title">Candidate ID {{ app.worker_id }}</h3>
+                </div>
+            </div>
+            <p class="job-description">Worker {{ app.worker_id }} has applied for this vacancy and is waiting for review.</p>
+        </article>
         {% endfor %}
-    </ul>
+    </div>
     {% else %}
-        <p>No responses yet.</p>
+    <article class="empty-state">
+        <h3 class="job-title">No applications yet.</h3>
+        <p class="empty-copy">This vacancy has not received any candidate responses so far.</p>
+    </article>
     {% endif %}
-    <a href="/dashboard" class="btn btn-secondary mt-3">Back</a>
-</body>
-</html>
+</section>
+{% endblock %}

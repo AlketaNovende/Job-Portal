@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}CareerFlow | Upload Resume{% endblock %}
+{% block content %}
+<section class="auth-grid">
+    <div class="auth-copy-block">
+        <span class="eyebrow">Resume Center</span>
+        <h1 class="auth-title">Keep your application profile ready.</h1>
+        <p class="auth-copy">
+            Upload a PDF or DOCX resume so you can maintain a complete candidate profile inside the portal.
+        </p>
+        {% if user.resume %}
+        <p class="footer-link">Current file: <a href="/{{ user.resume }}">{{ user.resume }}</a></p>
+        {% endif %}
+    </div>
+    <article class="auth-card">
+        <span class="badge">Upload</span>
+        <h2 class="panel-title">Submit your resume</h2>
+        <form method="POST" enctype="multipart/form-data" class="form-grid">
+            <label>
+                Resume file
+                <input type="file" name="resume" accept=".pdf,.docx" required>
+            </label>
+            <button type="submit">Upload Resume</button>
+        </form>
+        <p class="footer-link"><a href="/dashboard">Return to dashboard</a></p>
+    </article>
+</section>
+{% endblock %}

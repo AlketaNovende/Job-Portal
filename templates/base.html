@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Career Portal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <div class="bg-orb bg-orb-one"></div>
+        <div class="bg-orb bg-orb-two"></div>
+        <header class="topbar">
+            <a href="/" class="brand">Career<span>Flow</span></a>
+            <nav class="topbar-nav">
+                {% if session.get('user_id') %}
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Logout</a>
+                {% else %}
+                <a href="/register">Register</a>
+                <a href="/login">Login</a>
+                {% endif %}
+            </nav>
+        </header>
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

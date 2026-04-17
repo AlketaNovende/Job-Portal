@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, User, Job, Application
@@ -17,12 +17,23 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_app(app)
 
-@app.before_first_request
-def create_tables():
-    db.create_all()
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def serialize_job(job):
+    return {
+        'id': job.id,
+        'title': job.title,
+        'description': job.description,
+        'employer_id': job.employer_id,
+    }
+
+def serialize_application(application):
+    return {
+        'id': application.id,
+        'worker_id': application.worker_id,
+        'job_id': application.job_id,
+    }
 
 @app.route('/')
 def index():
@@ -117,7 +128,9 @@ def view_applications(job_id):
     if 'user_id' not in session or session['role'] != 'employer':
         return redirect('/login')
 
-    job = Job.query.get_or_404(job_id)
+    job = db.session.get(Job, job_id)
+    if not job:
+        return "Not Found", 404
 
     if job.employer_id != session['user_id']:
         return "Access Denied"
@@ -130,7 +143,7 @@ def upload_resume():
     if 'user_id' not in session or session['role'] != 'worker':
         return redirect('/login')
 
-    user = User.query.get(session['user_id'])
+    user = db.session.get(User, session['user_id'])
 
     if request.method == 'POST':
         file = request.files.get('resume')
@@ -146,9 +159,67 @@ def upload_resume():
 
     return render_template('upload_resume.html', user=user)
 
+@app.route('/api/jobs', methods=['GET'])
+def api_list_jobs():
+    jobs = Job.query.all()
+    return jsonify([serialize_job(job) for job in jobs])
+
+@app.route('/api/jobs', methods=['POST'])
+def api_create_job():
+    if 'user_id' not in session or session['role'] != 'employer':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json(silent=True) or {}
+    title = (data.get('title') or '').strip()
+    description = (data.get('description') or '').strip()
+
+    if not title or not description:
+        return jsonify({'error': 'Title and description are required'}), 400
+
+    job = Job(title=title, description=description, employer_id=session['user_id'])
+    db.session.add(job)
+    db.session.commit()
+    return jsonify(serialize_job(job)), 201
+
+@app.route('/api/applications', methods=['POST'])
+def api_create_application():
+    if 'user_id' not in session or session['role'] != 'worker':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json(silent=True) or {}
+    job_id = data.get('job_id')
+    if not job_id:
+        return jsonify({'error': 'job_id is required'}), 400
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+
+    existing = Application.query.filter_by(worker_id=session['user_id'], job_id=job_id).first()
+    if existing:
+        return jsonify({'error': 'Application already exists'}), 409
+
+    application = Application(worker_id=session['user_id'], job_id=job_id)
+    db.session.add(application)
+    db.session.commit()
+    return jsonify(serialize_application(application)), 201
+
+@app.route('/api/jobs/<int:job_id>/applications', methods=['GET'])
+def api_job_applications(job_id):
+    if 'user_id' not in session or session['role'] != 'employer':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+    if job.employer_id != session['user_id']:
+        return jsonify({'error': 'Forbidden'}), 403
+
+    applications = Application.query.filter_by(job_id=job_id).all()
+    return jsonify([serialize_application(application) for application in applications])
+
 if __name__ == '__main__':
+    # Create tables before running the app
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
- 
- 
-    
- 
